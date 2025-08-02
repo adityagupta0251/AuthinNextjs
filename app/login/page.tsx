@@ -55,7 +55,7 @@ export default function LoginPage() {
                     {/* Header */}
                     <div className="text-center mb-8">
                         <h1 className="text-3xl font-bold text-white mb-2">{loading ? "Processing" : "Login"}</h1>
-                        <p className="text-gray-300">One more Step!..</p>
+
                     </div>
 
                     {/* Form */}
@@ -87,7 +87,7 @@ export default function LoginPage() {
                                 type="password"
                                 value={user.password}
                                 onChange={(e) => setUser({ ...user, password: e.target.value })}
-                                placeholder="Create a password"
+                                placeholder="Enter your password"
                                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition duration-200 outline-none"
                                 required
                             />
