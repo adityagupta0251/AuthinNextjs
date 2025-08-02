@@ -1,50 +1,131 @@
+// app/profile/page.tsx
 "use client";
+
+import React, { useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import React, {useState} from "react";
-import {toast} from "react-hot-toast";
-import {useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
+interface User {
+    _id: string;
+    username: string;
+    email: string;
+    isVerified: boolean;
+    isAdmin: boolean;
+    __v: number;
+}
 
 export default function ProfilePage() {
-    const router = useRouter()
-    const [data, setData] = useState("nothing")
-    const logout = async () => {
-        try {
-            await axios.get('/api/users/logout')
-            toast.success('Logout successful')
-            router.push('/login')
-        } catch (error:any) {
-            console.log(error.message);
-            toast.error(error.message)
-        }
-    }
+    const router = useRouter();
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(false);
 
     const getUserDetails = async () => {
-        const res = await axios.get('/api/users/me')
-        console.log(res.data);
-        setData(res.data.data._id)
-    }
+        setLoading(true);
+        try {
+            const res = await axios.get("/api/users/me");
+            setUser(res.data.data);
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const updateUser = async () => {
+        if (!user) return;
+        const newName = prompt("New username:", user.username);
+        if (!newName) return;
+        try {
+            const res = await axios.put("/api/users/me", { username: newName });
+            setUser(res.data.data);
+            toast.success("Username updated");
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || err.message);
+        }
+    };
+
+    const deleteUser = async () => {
+        if (!confirm("Delete your account? This cannot be undone.")) return;
+        try {
+            await axios.delete("/api/users/me");
+            toast.success("Account deleted");
+            router.push("/signup");
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || err.message);
+        }
+    };
+
+    const logout = async () => {
+        try {
+            await axios.get("/api/users/logout");
+            toast.success("Logged out");
+            router.push("/login");
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || err.message);
+        }
+    };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen py-2">
-            <h1>Profile</h1>
-            <hr />
-            <p>Profile page</p>
-            <h2 className="p-1 rounded bg-green-500">{data === 'nothing' ? "Nothing" : <Link href={`/profile/${data}`}>{data}
-            </Link>}</h2>
-            <hr />
+        <div className="flex flex-col items-center justify-center min-h-screen space-y-6 p-4">
+            <h1 className="text-3xl font-bold">My Profile</h1>
+
+            {!user ? (
+                <button
+                    onClick={getUserDetails}
+                    disabled={loading}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+                >
+                    {loading ? "Loading…" : "Load My Details"}
+                </button>
+            ) : (
+                <div className="bg-white shadow rounded-lg p-6 w-full max-w-md space-y-3">
+                    <p>
+                        <strong>ID:</strong> {user._id}
+                    </p>
+                    <p>
+                        <strong>Username:</strong>{" "}
+                        <Link
+                            href={`/profile/${user._id}`}
+                            className="text-blue-600 hover:underline"
+                        >
+                            {user.username}
+                        </Link>
+                    </p>
+                    <p>
+                        <strong>Email:</strong> {user.email}
+                    </p>
+                    <p>
+                        <strong>Verified:</strong> {user.isVerified ? "Yes" : "No"}
+                    </p>
+                    <p>
+                        <strong>Admin:</strong> {user.isAdmin ? "Yes" : "No"}
+                    </p>
+
+                    <div className="flex justify-between mt-4">
+                        <button
+                            onClick={updateUser}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                        >
+                            Update Username
+                        </button>
+                        <button
+                            onClick={deleteUser}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                        >
+                            Delete Account
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <button
                 onClick={logout}
-                className="bg-blue-500 mt-4 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >Logout</button>
-
-            <button
-                onClick={getUserDetails}
-                className="bg-green-800 mt-4 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >GetUser Details</button>
-
-
+                className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded"
+            >
+                Logout
+            </button>
         </div>
-    )
+    );
 }
